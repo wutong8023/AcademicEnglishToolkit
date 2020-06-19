@@ -52,11 +52,6 @@ class Recorder:
         self.translator = Translator()
 
     def __write(self, snippet_serialized):
-        """
-        record sentences
-        :param sentence:
-        :return:
-        """
         with open(self.file_name, "a") as database:
             database.writelines("\n")
             database.writelines(snippet_serialized)
@@ -81,7 +76,8 @@ class Recorder:
 
         snippet = Snippet(sentence=input_sentence, translation=translation, time=time, tag=tag)
         snippet_serialized = json.dumps(snippet.__dict__)
-        self.__write(snippet_serialized)
+        if snippet.sentence is not "":
+            self.__write(snippet_serialized)
 
     def record(self):
         log.info("Start recording:")
@@ -97,9 +93,6 @@ class Recorder:
 class Quiz:
     def __init__(self, file_name=file_path, quiz_size=5, quiz_type="translate", sample_strategy="random",
                  metric_type="levenshtein"):
-        """
-        predefined quiz type
-        """
         self.file_name = file_name
         self.data = self.__load_data()
         self.quiz_size = quiz_size if quiz_size < len(self.data) else len(self.data)
@@ -119,10 +112,6 @@ class Quiz:
         self.metric_type = self.metric_types[metric_type]
 
     def __load_data(self) -> [Snippet]:
-        """
-        get stored data from file
-        :return:
-        """
         data = []
         with open(self.file_name) as file_in:
             for line in file_in:
@@ -152,13 +141,6 @@ class Quiz:
         return list(zip(eng_li, zh_li))
 
     def __generate_quiz(self):
-        """
-        generate a quiz
-        :param ss: sampling strategy
-        :param size: quiz size
-        :param type: the type of question
-        :return:
-        """
         temp_data = self.sample_strategy()
         quiz_data = self.quiz_type(temp_data)
         temp_score = 0
@@ -197,25 +179,25 @@ class Quiz:
             return len(expected_answer or '') or 0
         if not expected_answer:
             return len(my_answer or '') or 0
-        size1 = len(my_answer)
-        size2 = len(expected_answer)
+        my_answer_size = len(my_answer)
+        expected_answer_size = len(expected_answer)
         last = 0
-        tmp = list(range(size2 + 1))
-        value = None
-        for i in range(size1):
+        tmp = list(range(expected_answer_size + 1))
+        levenshtein_distance = None
+        for i in range(my_answer_size):
             tmp[0] = i + 1
             last = i
             # print word1[i], last, tmp
-            for j in range(size2):
+            for j in range(expected_answer_size):
                 if my_answer[i] == expected_answer[j]:
-                    value = last
+                    levenshtein_distance = last
                 else:
-                    value = 1 + min(last, tmp[j], tmp[j + 1])
+                    levenshtein_distance = 1 + min(last, tmp[j], tmp[j + 1])
                     # print(last, tmp[j], tmp[j + 1], value)
                 last = tmp[j + 1]
-                tmp[j + 1] = value
+                tmp[j + 1] = levenshtein_distance
             # print tmp
-        return int(100 - value / (size1 + size2) * 100)
+        return int(100 - levenshtein_distance / (my_answer_size + expected_answer_size) * 100)
 
 
 if __name__ == '__main__':
