@@ -7,7 +7,14 @@ Time: 28-05-2020
 import json
 import datetime
 import random
+import logging
+import sys
 from googletrans import Translator
+
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG,
+                    datefmt='%m/%d/%Y %I:%M:%S')
+# setup logger
+log = logging.getLogger(__name__)
 
 file_path = "./library/snippets"
 
@@ -53,19 +60,22 @@ class Recorder:
         with open(self.file_name, "a") as database:
             database.writelines("\n")
             database.writelines(snippet_serialized)
-        print("recorded successfully")
+        log.info("recorded successfully")
 
     def __record(self):
-        print("____________________________________________________________")
-        input_sentence = input("please input the snippet:\n")
+        log.info("______________________________________________________________________________")
+        log.info("please input the snippet:")
+        input_sentence = input()
         auto_translation = self.translator.translate(input_sentence, dest='zh-cn').text
-        print("please check the suggested translation:")
+        log.info("please check the suggested translation:")
         print(auto_translation)
         assert type(auto_translation) is str
-        input_translation = input("If correct -> y, otherwise - the manually modified translation:\n")
+        log.info("If correct -> \\Enter, otherwise - the manually modified translation:")
+        input_translation = input()
         translation = auto_translation if input_translation is "y" or "Y" or "" else input_sentence
-        print(self.tags)
-        tag_id = input("please input the tag id: \n")
+        log.info(self.tags)
+        log.info("please input the tag id:")
+        tag_id = input()
         tag = self.tags[tag_id] if tag_id in self.tags.keys() else "Other"
         time = str(datetime.date.today())
 
@@ -74,11 +84,14 @@ class Recorder:
         self.__write(snippet_serialized)
 
     def record(self):
-        print("Start recording:")
+        log.info("Start recording:")
         flag = "="
         while flag is not "#":
             self.__record()
-            flag = input("press any key except '#' to continue\n")
+            log.info("______________________________________________________________________________")
+            log.info("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+            log.info("press any key except '#' to continue")
+            flag = input()
 
 
 class Quiz:
@@ -153,24 +166,25 @@ class Quiz:
 
         for meta_question in quiz_data:
             # print(meta_question)
-            print("############################")
+            log.info("______________________________________________________________________________")
             en = meta_question[0]
             zh = meta_question[1][0][0]
             temp_num += 1
-            print(temp_num, ": ", zh)
+            log.info(str(temp_num)+": "+zh)
             temp_score += self.__meta_test(en)
 
-        print("Average Score: ", temp_score/temp_num)
+        log.info("Average Score: "+str(temp_score/temp_num))
 
     def start(self):
-        print("____________Start_____________")
+        log.info("______________________________________START________________________________________")
         self.__generate_quiz()
-        print("___________Finished___________")
+        log.info("_____________________________________FINISHED______________________________________")
 
     def __meta_test(self, en):
-        my_answer = input("your answer: ")
+        log.info("your answer:")
+        my_answer = input()
         score = self.__metric(my_answer, en)
-        print("Score: ", score, "\nExpected answer: ", en)
+        log.info("Score: "+str(score)+"\nExpected answer: "+en)
         return score
 
     def __metric(self, my_answer, expected_answer):
@@ -205,10 +219,13 @@ class Quiz:
 
 
 if __name__ == '__main__':
-    record = Recorder()
-    record.record()
-    if input("Press \\Enter to start a quiz！") is "":
-        quiz = Quiz()
+    log.info("Press \\Enter to start record！")
+    if input() is "":
+        record = Recorder()
+        record.record()
+    log.info("Press \\Enter to start a quiz！")
+    if input() is "":
+        quiz = Quiz(quiz_size=3)
         quiz.start()
 
 
